@@ -2,7 +2,8 @@ package webapi
 
 import (
 	"net/http"
-	"regexp"
+
+	pathToRegexp "github.com/soongo/path-to-regexp"
 )
 
 // HandlerFunc is the definition of any Handler of this Web API framework
@@ -93,22 +94,21 @@ func NewNativeHandler(handler http.Handler) Handler {
 
 // routeConig is an internal type that defines a Route Configuration.
 type routeConfig struct {
-	matcher *regexp.Regexp
+	match   func(string) (*pathToRegexp.MatchResult, error)
 	handler Handler
 }
 
 func (cfg *routeConfig) Match(route string) (bool, map[string]string) {
-	match := cfg.matcher.FindStringSubmatch(route)
-	if len(match) == 0 {
+	res, err := cfg.match(route)
+	if err != nil || res == nil {
 		return false, nil
 	}
-	result := make(map[string]string)
-	for i, name := range cfg.matcher.SubexpNames() {
-		if i != 0 && name != "" {
-			result[name] = match[i]
-		}
+
+	ret := make(map[string]string)
+	for k, v := range res.Params {
+		ret[k.(string)] = v.(string)
 	}
-	return len(match) > 0, result
+	return true, ret
 }
 
 func (cfg *routeConfig) Handle(w http.ResponseWriter, r *ParsedRequest) {
@@ -125,9 +125,12 @@ type Router struct {
 
 // Handle registers a handler for a given request type.
 func (router *Router) Handle(method, matcher string, handler Handler) {
+	match := pathToRegexp.MustMatch(matcher, &pathToRegexp.Options{Decode: func(str string, token interface{}) (string, error) {
+		return pathToRegexp.DecodeURIComponent(str)
+	}}) // todo panics
+
 	router.handlers[method] = append(router.handlers[method], &routeConfig{
-		matcher: regexp.MustCompile(matcher), // todo panics
-		handler: handler,
+		match: match,
 	})
 }
 

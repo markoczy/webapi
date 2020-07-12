@@ -138,6 +138,7 @@ func TestRouter(t *testing.T) {
 	fallback404 := NewErrorHandler(http.StatusNotFound, "404 not found")
 	helloMock := "hello"
 	byeMock := "bye"
+	paramMock := "xyz"
 
 	helloHandler := NewHandler(func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
 		w.Write([]byte(helloMock))
@@ -149,9 +150,15 @@ func TestRouter(t *testing.T) {
 		return next()
 	})
 
+	paramHandler := NewHandler(func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
+		w.Write([]byte(r.pathParams["param"]))
+		return next()
+	})
+
 	router := NewRouter(fallback404)
 	router.Handle(http.MethodGet, "/hello", helloHandler)
 	router.Handle(http.MethodGet, "/bye", byeHandler)
+	router.Handle(http.MethodGet, "/param/:param", paramHandler)
 
 	// Hello
 	{
@@ -184,6 +191,23 @@ func TestRouter(t *testing.T) {
 		have, want := w.String(), byeMock
 		if have != want {
 			t.Errorf("Bye: Router did not return correct response code, have %s want %s", have, want)
+		}
+	}
+
+	// Param
+	{
+		w := newMockResponseWriter()
+		r := newMockRequest(func(req *ParsedRequest) {
+			req.request.Method = http.MethodGet
+			req.request.URL = &url.URL{
+				Path: "/param/" + paramMock,
+			}
+		})
+
+		router.ServeHTTP(w, r.request)
+		have, want := w.String(), paramMock
+		if have != want {
+			t.Errorf("Param: Router did not return correct response code, have %s want %s", have, want)
 		}
 	}
 }
