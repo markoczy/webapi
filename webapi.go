@@ -15,8 +15,8 @@ type HandlerFunc func(w http.ResponseWriter, r *ParsedRequest, next func() Handl
 // ParsedRequest is an enriched version of the native http.Request which
 // contains the parsed PathParams.
 type ParsedRequest struct {
-	pathParams map[string]string
-	request    *http.Request
+	PathParams map[string]string
+	Request    *http.Request
 }
 
 // Handler is an interface that defines any request handler of this Framework.
@@ -86,7 +86,7 @@ func NewErrorHandler(code int, err string) Handler {
 func NewNativeHandler(handler http.Handler) Handler {
 	return NewHandler(
 		func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
-			handler.ServeHTTP(w, r.request)
+			handler.ServeHTTP(w, r.Request)
 			return next()
 		},
 	)
@@ -130,7 +130,8 @@ func (router *Router) Handle(method, matcher string, handler Handler) {
 	}}) // todo panics
 
 	router.handlers[method] = append(router.handlers[method], &routeConfig{
-		match: match,
+		match:   match,
+		handler: handler,
 	})
 }
 
@@ -139,7 +140,7 @@ func (router *Router) Handle(method, matcher string, handler Handler) {
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if router.handlers[r.Method] == nil {
 		router.fallback.HandleAll(w, &ParsedRequest{
-			request: r,
+			Request: r,
 		})
 		return
 	}
@@ -147,15 +148,15 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		matches, pathParams := cfg.Match(r.URL.Path)
 		if matches {
 			parsed := &ParsedRequest{
-				pathParams: pathParams,
-				request:    r,
+				PathParams: pathParams,
+				Request:    r,
 			}
 			cfg.handler.HandleAll(w, parsed)
 			return
 		}
 	}
 	router.fallback.HandleAll(w, &ParsedRequest{
-		request: r,
+		Request: r,
 	})
 }
 

@@ -50,8 +50,8 @@ func newMockResponseWriter() *mockResponseWriter {
 
 func newMockRequest(options ...func(*ParsedRequest)) *ParsedRequest {
 	ret := &ParsedRequest{
-		request:    &http.Request{},
-		pathParams: map[string]string{},
+		Request:    &http.Request{},
+		PathParams: map[string]string{},
 	}
 	for _, opt := range options {
 		opt(ret)
@@ -102,7 +102,7 @@ func TestErrorHandler(t *testing.T) {
 	badRequest := NewErrorHandler(http.StatusBadRequest, badRequestStr)
 
 	hnd := NewHandler(func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
-		if r.request.Method == http.MethodPost {
+		if r.Request.Method == http.MethodPost {
 			return badRequest
 		}
 		w.Write([]byte(mockData))
@@ -123,7 +123,7 @@ func TestErrorHandler(t *testing.T) {
 	{
 		w := newMockResponseWriter()
 		r := newMockRequest(func(req *ParsedRequest) {
-			req.request.Method = http.MethodPost
+			req.Request.Method = http.MethodPost
 		})
 		hnd.HandleAll(w, r)
 		have, want := w.status, http.StatusBadRequest
@@ -151,7 +151,7 @@ func TestRouter(t *testing.T) {
 	})
 
 	paramHandler := NewHandler(func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
-		w.Write([]byte(r.pathParams["param"]))
+		w.Write([]byte(r.PathParams["param"]))
 		return next()
 	})
 
@@ -164,13 +164,13 @@ func TestRouter(t *testing.T) {
 	{
 		w := newMockResponseWriter()
 		r := newMockRequest(func(req *ParsedRequest) {
-			req.request.Method = http.MethodGet
-			req.request.URL = &url.URL{
+			req.Request.Method = http.MethodGet
+			req.Request.URL = &url.URL{
 				Path: "/hello",
 			}
 		})
 
-		router.ServeHTTP(w, r.request)
+		router.ServeHTTP(w, r.Request)
 		have, want := w.String(), helloMock
 		if have != want {
 			t.Errorf("Hello: Router did not return correct response code, have %s want %s", have, want)
@@ -181,13 +181,13 @@ func TestRouter(t *testing.T) {
 	{
 		w := newMockResponseWriter()
 		r := newMockRequest(func(req *ParsedRequest) {
-			req.request.Method = http.MethodGet
-			req.request.URL = &url.URL{
+			req.Request.Method = http.MethodGet
+			req.Request.URL = &url.URL{
 				Path: "/bye",
 			}
 		})
 
-		router.ServeHTTP(w, r.request)
+		router.ServeHTTP(w, r.Request)
 		have, want := w.String(), byeMock
 		if have != want {
 			t.Errorf("Bye: Router did not return correct response code, have %s want %s", have, want)
@@ -198,16 +198,17 @@ func TestRouter(t *testing.T) {
 	{
 		w := newMockResponseWriter()
 		r := newMockRequest(func(req *ParsedRequest) {
-			req.request.Method = http.MethodGet
-			req.request.URL = &url.URL{
+			req.Request.Method = http.MethodGet
+			req.Request.URL = &url.URL{
 				Path: "/param/" + paramMock,
 			}
 		})
 
-		router.ServeHTTP(w, r.request)
+		router.ServeHTTP(w, r.Request)
 		have, want := w.String(), paramMock
 		if have != want {
 			t.Errorf("Param: Router did not return correct response code, have %s want %s", have, want)
 		}
 	}
+
 }
