@@ -2,6 +2,23 @@
 
 Golang Web API Framework
 
+## Purpose
+
+The Project "webapi" is a Go Module with the purpose of creating feature rich
+web apis with little effort. It extends the functionality of the `net/http`
+package and adds a Router that implements the `net/http.Handler` interface.
+The Router can be used in the context of a `net/http.Server` to route 
+HTTP(S) requests to a specific handler by using regex matchers that are defined
+in the powerful, yet easy to understand 
+[Path-To-Regexp](https://github.com/soongo/path-to-regexp) Syntax. With
+Path-To-Regexp, the Router is also capable of parsing Path Parameters that are
+defined in the route's matcher string, (see example or test cases). The path
+parameters will be passed as a `map[string]string` to any of the given request
+handlers. The framework defines new Handler functions that are more 
+flexible than `net/http.HandlerFunc`'s and allow the programmer to create
+chained handlers with customizable alternative paths (e.g. Error Handlers).
+See examples for more info...
+
 ## Usage
 
 Here's a minimalistic example usage:
@@ -30,7 +47,7 @@ handler := webapi.NewHandler(
     },
 )
 // Register Handler
-router.Handle(http.MethodGet, "/hello/:name", helloHandler)
+router.Handle(http.MethodGet, "/hello/:name", handler)
 // Serve HTTP
 http.ListenAndServe(":7890", router)
 //
