@@ -21,7 +21,13 @@ See examples for more info...
 
 ## Usage
 
-Here's a minimalistic example usage:
+Simply `go get` the package and start coding:
+
+```bash
+go get https://github.com/markoczy/webapi
+```
+
+Here's a minimalistic usage example:
 
 ```go
 // Create Fallback handler (for unmatched requests)
