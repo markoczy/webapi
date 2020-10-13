@@ -2,6 +2,7 @@ package webapi
 
 import (
 	"net/http"
+	"strconv"
 
 	pathToRegexp "github.com/soongo/path-to-regexp"
 )
@@ -92,6 +93,18 @@ func NewNativeHandler(handler http.Handler) Handler {
 	)
 }
 
+func asString(x interface{}) string {
+	ret := ""
+	ret, success := x.(string)
+	if !success {
+		i, success := x.(int)
+		if success {
+			ret = strconv.Itoa(i)
+		}
+	}
+	return ret
+}
+
 // routeConig is an internal type that defines a Route Configuration.
 type routeConfig struct {
 	match   func(string) (*pathToRegexp.MatchResult, error)
@@ -106,7 +119,7 @@ func (cfg *routeConfig) Match(route string) (bool, map[string]string) {
 
 	ret := make(map[string]string)
 	for k, v := range res.Params {
-		ret[k.(string)] = v.(string)
+		ret[asString(k)] = asString(v)
 	}
 	return true, ret
 }
