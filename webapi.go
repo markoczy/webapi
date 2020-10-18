@@ -18,6 +18,7 @@ type HandlerFunc func(w http.ResponseWriter, r *ParsedRequest, next func() Handl
 type ParsedRequest struct {
 	PathParams map[string]string
 	Request    *http.Request
+	State      interface{}
 }
 
 // Handler is an interface that defines any request handler of this Framework.
