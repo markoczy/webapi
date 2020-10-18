@@ -14,7 +14,8 @@ import (
 type HandlerFunc func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler
 
 // ParsedRequest is an enriched version of the native http.Request which
-// contains the parsed PathParams.
+// contains the parsed PathParams as well as an optional State Variable
+// to exchange Data between successive Handlers.
 type ParsedRequest struct {
 	PathParams map[string]string
 	Request    *http.Request
