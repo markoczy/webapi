@@ -95,6 +95,14 @@ func NewNativeHandler(handler http.Handler) Handler {
 	)
 }
 
+// NewNativeHandlerFunc creates an intermediate Handler from a net/http Handler.
+func NewNativeHandlerFunc(handler http.Handler) HandlerFunc {
+	return func(w http.ResponseWriter, r *ParsedRequest, next func() Handler) Handler {
+		handler.ServeHTTP(w, r.Request)
+		return next()
+	}
+}
+
 func asString(x interface{}) string {
 	ret := ""
 	ret, success := x.(string)
